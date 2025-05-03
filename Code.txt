@@ -1,0 +1,779 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Lock, KeyRound, User, ChevronRight, CheckCircle, Info, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Mock user data for demonstration purposes.  **NEVER** store passwords in plaintext!
+const mockUsers = {
+    'user1': 'password123',
+    'hacker42': 'secretPass',
+    'admin': 'strongPassword!',
+};
+
+// ===============================
+// Login Page Component
+// ===============================
+const LoginPage = ({ onLogin }: { onLogin: (username: string) => void }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        // Simulate an asynchronous login process (e.g., network request)
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate 1 second delay
+
+            if (mockUsers[username] && mockUsers[username] === password) {
+                onLogin(username);
+            } else {
+                setError('Invalid credentials. Please try again.');
+            }
+        } catch (err) {
+            setError('An unexpected error occurred.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black p-4"
+        >
+            <Card className="w-full max-w-md bg-white/5 backdrop-blur-md border border-white/10 shadow-xl">
+                <CardHeader className="text-center">
+                    <Lock className="w-12 h-12 mx-auto mb-4 text-purple-400" />
+                    <CardTitle className="text-2xl font-semibold text-white">Login</CardTitle>
+                    <CardDescription className="text-gray-400">
+                        Access the hacking practice platform
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="username" className="text-gray-300">Username</Label>
+                            <Input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Enter your username"
+                                required
+                                className="bg-black/20 text-white border-purple-500/30 placeholder:text-gray-500"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-gray-300">Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter your password"
+                                required
+                                className="bg-black/20 text-white border-purple-500/30 placeholder:text-gray-500"
+                            />
+                        </div>
+                        {error && (
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Error</AlertTitle>
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
+                        <Button
+                            type="submit"
+                            className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <svg
+                                        className="animate-spin h-5 w-5 mr-3"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                    </svg>
+                                    Loading...
+                                </>
+                            ) : (
+                                <>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Login
+                                </>
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </motion.div>
+    );
+};
+
+// ===============================
+// SQL Injection Page Component
+// ===============================
+const SQLInjectionPage = () => {
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<string[] | null>(null);
+    const [error, setError] = useState('');
+    const [isSafeQuery, setIsSafeQuery] = useState(false);
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setResults(null);
+
+        // Simulate a backend query (vulnerable to SQL injection)
+        try {
+            // In a real application, this would be a server-side query.
+            // **THIS IS VULNERABLE.  DO NOT USE THIS IN PRODUCTION.**
+            const mockData = {
+                "user1": ["Alice", "alice@example.com"],
+                "user2": ["Bob", "bob@example.com"],
+                "admin": ["Administrator", "admin@example.com"],
+            };
+
+            // Simulate a safe query to compare.
+            const safeMockResults: string[] | null = mockData[query] ? mockData[query] : null;
+
+            if (isSafeQuery) {
+                setResults(safeMockResults);
+                return;
+            }
+
+            // Vulnerable query simulation (do NOT use like this in real code)
+            let vulnerableResults: string[] | null = null;
+            if (query.toLowerCase().includes("admin'--")) {
+                vulnerableResults = ["Administrator", "admin@example.com"]; // Simulate bypassing login
+            } else if (mockData[query]) {
+                vulnerableResults = mockData[query];
+            } else if (query.toLowerCase().includes("' OR '1'='1'--")) {
+                vulnerableResults = Object.values(mockData).flat();
+            }
+            else {
+                vulnerableResults = null;
+            }
+            setResults(vulnerableResults);
+
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(`Error: ${err.message}`);
+            } else {
+                setError('An unexpected error occurred.');
+            }
+        }
+    };
+
+    return (
+        <div className="p-6 bg-gray-900 min-h-screen">
+            <div className="max-w-4xl mx-auto space-y-8">
+                <h2 className="text-3xl font-bold text-white">SQL Injection Practice</h2>
+                <p className="text-gray-400">
+                    Learn how SQL injection works by trying to extract data or bypass authentication.
+                    Enter a username or a crafted SQL injection payload.
+                </p>
+
+                <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-white">Search for User Data</CardTitle>
+                        <CardDescription className="text-gray-400">
+                            Enter a username (e.g., 'user1') or try a SQL injection payload.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSearch} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="query" className="text-gray-300">Query</Label>
+                                <Input
+                                    id="query"
+                                    type="text"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Enter username or payload"
+                                    className="bg-black/20 text-white border-purple-500/30 placeholder:text-gray-500"
+                                />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="safeQuery"
+                                    checked={isSafeQuery}
+                                    onChange={() => setIsSafeQuery(!isSafeQuery)}
+                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <Label htmlFor="safeQuery" className="text-gray-300">
+                                    Use Safe Query (for comparison)
+                                </Label>
+                            </div>
+                            <Button
+                                type="submit"
+                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                                Search
+                            </Button>
+                        </form>
+                        {error && (
+                            <Alert variant="destructive" className="mt-4">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Error</AlertTitle>
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
+                        {results && (
+                            <div className="mt-6 p-4 bg-black/20 border border-white/10 rounded-md">
+                                <h3 className="text-lg font-semibold text-white mb-2">Results:</h3>
+                                {results.length > 0 ? (
+                                    <ul className="list-disc list-inside text-gray-300">
+                                        {results.map((item, index) => (
+                                            <li key={index}>{item}</li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-gray-400">No results found.</p>
+                                )}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Alert className="bg-yellow-500/10 border-yellow-500/20 text-yellow-300">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Warning:</AlertTitle>
+                    <AlertDescription>
+                        This page demonstrates a SQL injection vulnerability.  Do NOT use this code on a
+                        real website.  It is for educational purposes only.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        </div>
+    );
+};
+
+// ===============================
+// Cross-Site Scripting (XSS) Page
+// ===============================
+const XSSPage = () => {
+    const [userInput, setUserInput] = useState('');
+    const [output, setOutput] = useState('');
+    const [isSafeMode, setIsSafeMode] = useState(false);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUserInput(e.target.value);
+    };
+
+    const handleOutput = () => {
+        if (isSafeMode) {
+            // Basic HTML escaping for "safe mode"
+            const safeOutput = userInput
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+            setOutput(safeOutput);
+        } else {
+            //  Vulnerable code.  In a real app, this would be *extremely* dangerous.
+            setOutput(userInput);
+        }
+    };
+
+    return (
+        <div className="p-6 bg-gray-900 min-h-screen">
+            <div className="max-w-4xl mx-auto space-y-8">
+                <h2 className="text-3xl font-bold text-white">Cross-Site Scripting (XSS)</h2>
+                <p className="text-gray-400">
+                    Practice exploiting XSS vulnerabilities.  Enter JavaScript code or HTML tags
+                    to see how they can be used to inject malicious content.
+                </p>
+
+                <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-white">XSS Input</CardTitle>
+                        <CardDescription className="text-gray-400">
+                            Enter text or JavaScript code to see the output.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Input
+                            type="text"
+                            value={userInput}
+                            onChange={handleInputChange}
+                            placeholder="Enter text or code here"
+                            className="bg-black/20 text-white border-purple-500/30 placeholder:text-gray-500"
+                        />
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="safeMode"
+                                checked={isSafeMode}
+                                onChange={() => setIsSafeMode(!isSafeMode)}
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <Label htmlFor="safeMode" className="text-gray-300">
+                                Safe Mode (HTML Escape)
+                            </Label>
+                        </div>
+                        <Button
+                            onClick={handleOutput}
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                            Show Output
+                        </Button>
+                        <div className="mt-6">
+                            <h3 className="text-lg font-semibold text-white mb-2">Output:</h3>
+                            <div
+                                className={cn(
+                                    "p-4 bg-black/20 border border-white/10 rounded-md min-h-[80px]",
+                                    !isSafeMode && "text-red-500" // Make it red in vulnerable mode
+                                )}
+                            >
+                                {output ? (
+                                    <div dangerouslySetInnerHTML={{ __html: output }} />
+                                ) : (
+                                    <p className="text-gray-400">Output will appear here...</p>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Alert className="bg-yellow-500/10 border-yellow-500/20 text-yellow-300">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Warning:</AlertTitle>
+                    <AlertDescription>
+                        This page demonstrates an XSS vulnerability.  Do NOT use this code on a real
+                        website.  It is for educational purposes only.  In "Safe Mode", basic HTML
+                        escaping is used to prevent XSS.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        </div>
+    );
+};
+
+// ===============================
+// File Upload Vulnerability Page
+// ===============================
+const FileUploadPage = () => {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
+    const [message, setMessage] = useState('');
+    const [isSafeUpload, setIsSafeUpload] = useState(false);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+            setMessage(''); // Clear previous messages
+        }
+    };
+
+    const handleUpload = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedFile) {
+            setMessage('Please select a file to upload.');
+            setUploadStatus('error');
+            return;
+        }
+
+        setUploadStatus('loading');
+        setMessage('Uploading...');
+
+        // Simulate file upload process (including potential vulnerability)
+        try {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate 2-second delay
+
+            // In a real application, this is where you would handle the file upload on the server.
+            // **THIS IS VULNERABLE IF NOT HANDLED CORRECTLY ON THE SERVER.**
+
+            if (isSafeUpload) {
+                // Simulate a "safe" upload with basic file type checking
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (allowedTypes.includes(selectedFile.type)) {
+                    setUploadStatus('success');
+                    setMessage(`Uploaded ${selectedFile.name} (Safe Mode).  File stored (simulated).`);
+                } else {
+                    setUploadStatus('error');
+                    setMessage(`File type not allowed (Safe Mode).  Only images are allowed.`);
+                }
+
+            } else {
+                // Simulate a vulnerable upload (e.g., allowing any file type, no content check)
+                // **THIS IS VULNERABLE.  DO NOT DO THIS IN REAL CODE.**
+                if (selectedFile.name.toLowerCase().endsWith('.php')) {
+                    setUploadStatus('error');
+                    setMessage(`Uploaded ${selectedFile.name} (Vulnerable Mode).  File stored (simulated).  This could be a dangerous file!`);
+                } else {
+                    setUploadStatus('success');
+                    setMessage(`Uploaded ${selectedFile.name} (Vulnerable Mode).  File stored (simulated).`);
+                }
+
+            }
+
+        } catch (err) {
+            setUploadStatus('error');
+            if (err instanceof Error) {
+                setMessage(`Upload failed: ${err.message}`);
+            } else {
+                setMessage('Upload failed.');
+            }
+        }
+    };
+
+    return (
+        <div className="p-6 bg-gray-900 min-h-screen">
+            <div className="max-w-4xl mx-auto space-y-8">
+                <h2 className="text-3xl font-bold text-white">File Upload Vulnerability</h2>
+                <p className="text-gray-400">
+                    Practice exploiting file upload vulnerabilities.  Try uploading different types of
+                    files, including potentially dangerous ones.
+                </p>
+
+                <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-white">File Upload</CardTitle>
+                        <CardDescription className="text-gray-400">
+                            Select a file to upload and observe the server's response.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <form onSubmit={handleUpload} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="file" className="text-gray-300">Choose File</Label>
+                                <Input
+                                    id="file"
+                                    type="file"
+                                    onChange={handleFileChange}
+                                    className="bg-black/20 text-white border-purple-500/30"
+                                />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="safeUpload"
+                                    checked={isSafeUpload}
+                                    onChange={() => setIsSafeUpload(!isSafeUpload)}
+                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <Label htmlFor="safeUpload" className="text-gray-300">
+                                    Safe Upload (Basic Type Check)
+                                </Label>
+                            </div>
+                            <Button
+                                type="submit"
+                                className="bg-indigo-500 hover:bg-indigo-600 text-white"
+                                disabled={uploadStatus === 'loading'}
+                            >
+                                {uploadStatus === 'loading' ? (
+                                    <>
+                                        <svg
+                                            className="animate-spin h-5 w-5 mr-3"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
+                                        </svg>
+                                        Uploading...
+                                    </>
+                                ) : (
+                                    "Upload File"
+                                )}
+                            </Button>
+                        </form>
+
+                        {message && (
+                            <Alert
+                                variant={uploadStatus === 'success' ? 'default' : 'destructive'}
+                                className={cn(
+                                    "mt-4",
+                                    uploadStatus === 'success' && 'bg-green-500/10 border-green-500/20 text-green-300',
+                                    uploadStatus === 'error' && 'bg-red-500/10 border-red-500/20 text-red-300'
+                                )}
+                            >
+                                {uploadStatus === 'success' ? (
+                                    <CheckCircle className="h-4 w-4" />
+                                ) : (
+                                    <AlertCircle className="h-4 w-4" />
+                                )}
+                                <AlertTitle>
+                                    {uploadStatus === 'success' ? 'Success' :
+                                        uploadStatus === 'error' ? 'Error' : 'Info'}
+                                </AlertTitle>
+                                <AlertDescription>{message}</AlertDescription>
+                            </Alert>
+                        )}
+                    </CardContent>
+                </Card>
+                <Alert className="bg-yellow-500/10 border-yellow-500/20 text-yellow-300">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Warning:</AlertTitle>
+                    <AlertDescription>
+                        This page demonstrates a file upload vulnerability.  Do NOT use this code on a
+                        real website.  It is for educational purposes only.  "Safe Upload" mode
+                        simulates basic file type checking, but proper server-side validation and
+                        storage are crucial for security.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        </div>
+    );
+};
+
+// ===============================
+// Command Injection Page
+// ===============================
+
+const CommandInjectionPage = () => {
+    const [command, setCommand] = useState('');
+    const [output, setOutput] = useState('');
+    const [error, setError] = useState('');
+    const [isSafeMode, setIsSafeMode] = useState(false);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setCommand(e.target.value);
+    };
+
+    const executeCommand = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setOutput('');
+
+        try {
+            if (isSafeMode) {
+                // Simulate a "safe" command execution (very limited)
+                if (command.trim().startsWith('ping')) {
+                    setOutput(`Pinging ${command.split(' ')[1]} (Simulated - Safe Mode)`);
+                }
+                else if (command.trim().startsWith('echo')) {
+                    setOutput(command.split(' ').slice(1).join(' ') + " (Simulated - Safe Mode)");
+                }
+                else {
+                    setOutput("Command not allowed in safe mode.  Only 'ping' and 'echo' are allowed.");
+                }
+            }
+            else {
+                // Simulate command execution (vulnerable)
+                //  **THIS IS VULNERABLE.  DO NOT USE THIS IN REAL CODE.**
+                if (command.toLowerCase().includes('; rm -rf /')) {
+                    setOutput("Simulated:  Dangerous command blocked (rm -rf /).  This would delete everything!");
+                    setError("Dangerous command detected");
+                }
+                else if (command.toLowerCase().includes('; cat /etc/passwd')) {
+                    setOutput("Simulated:  Sensitive file access blocked (/etc/passwd).");
+                    setError("Sensitive file access detected");
+                }
+                else {
+                    setOutput(`Running command: ${command} (Simulated - Vulnerable Mode)`);
+                }
+            }
+
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(`Error: ${err.message}`);
+            } else {
+                setError('An unexpected error occurred.');
+            }
+        }
+    };
+
+
+    return (
+        <div className="p-6 bg-gray-900 min-h-screen">
+            <div className="max-w-4xl mx-auto space-y-8">
+                <h2 className="text-3xl font-bold text-white">Command Injection</h2>
+                <p className="text-gray-400">
+                    Practice exploiting command injection vulnerabilities.  Enter commands to see how they
+                    are executed (or simulated).
+                </p>
+
+                <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-white">Execute Command</CardTitle>
+                        <CardDescription className="text-gray-400">
+                            Enter a command to execute on the server.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <form onSubmit={executeCommand} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="command" className="text-gray-300">Command</Label>
+                                <Input
+                                    id="command"
+                                    type="text"
+                                    value={command}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter command here (e.g., 'ls -l' or 'ping 8.8.8.8')"
+                                    className="bg-black/20 text-white border-purple-500/30 placeholder:text-gray-500"
+                                />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="safeMode"
+                                    checked={isSafeMode}
+                                    onChange={() => setIsSafeMode(!isSafeMode)}
+                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <Label htmlFor="safeMode" className="text-gray-300">
+                                    Safe Mode (Limited Commands)
+                                </Label>
+                            </div>
+                            <Button
+                                type="submit"
+                                className="bg-orange-500 hover:bg-orange-600 text-white"
+                            >
+                                Execute
+                            </Button>
+                        </form>
+                        {error && (
+                            <Alert variant="destructive" className="mt-4">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Error</AlertTitle>
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
+                        <div className="mt-6">
+                            <h3 className="text-lg font-semibold text-white mb-2">Output:</h3>
+                            <div className="p-4 bg-black/20 border border-white/10 rounded-md min-h-[80px] text-gray-300">
+                                {output || <p className="text-gray-400">Output will appear here...</p>}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Alert className="bg-yellow-500/10 border-yellow-500/20 text-yellow-300">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Warning:</AlertTitle>
+                    <AlertDescription>
+                        This page demonstrates a command injection vulnerability.  Do NOT use this code on a
+                        real website.  It is for educational purposes only.  "Safe Mode" simulates
+                        limiting the allowed commands, but proper input validation and sanitization are
+                        essential for security.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        </div>
+    );
+};
+
+// ===============================
+// Main App Component
+// ===============================
+const HackingPracticeApp = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [username, setUsername] = useState('');
+    const [currentPage, setCurrentPage] = useState('login');
+
+    // Check for existing login on initial load (simplified)
+    useEffect(() => {
+        const storedUsername = localStorage.getItem('hackingPracticeUsername');
+        if (storedUsername) {
+            setIsLoggedIn(true);
+            setUsername(storedUsername);
+            setCurrentPage('sql'); // Or a default page
+        }
+    }, []);
+
+    const handleLogin = (user: string) => {
+        setIsLoggedIn(true);
+        setUsername(user);
+        localStorage.setItem('hackingPracticeUsername', user); // Store username (simplified)
+        setCurrentPage('sql'); // Redirect to SQL Injection page after login
+    };
+
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setUsername('');
+        localStorage.removeItem('hackingPracticeUsername'); // Remove stored username
+        setCurrentPage('login');
+    };
+
+    if (!isLoggedIn) {
+        return <LoginPage onLogin={handleLogin} />;
+    }
+
+    return (
+        <div className="bg-gray-900 min-h-screen">
+            <header className="bg-black/10 backdrop-blur-md py-4 px-6 border-b border-white/10 flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-white">Hacking Practice</h1>
+                <div className="flex items-center gap-4">
+                    <span className="text-gray-300">Logged in as: <span className="font-semibold text-purple-400">{username}</span></span>
+                    <Button
+                        onClick={handleLogout}
+                        className="bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                    >
+                        Logout
+                    </Button>
+                </div>
+            </header>
+
+            <Tabs defaultValue="sql" value={currentPage} onValueChange={setCurrentPage} className="p-4">
+                <TabsList className="mb-8 bg-black/5 backdrop-blur-md border border-white/10">
+                    <TabsTrigger value="sql" className="text-white data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+                        <FileText className="mr-2 h-4 w-4" /> SQL Injection
+                    </TabsTrigger>
+                    <TabsTrigger value="xss" className="text-white data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+                        <FileText className="mr-2 h-4 w-4" /> XSS
+                    </TabsTrigger>
+                    <TabsTrigger value="upload" className="text-white data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+                        <FileText className="mr-2 h-4 w-4" /> File Upload
+                    </TabsTrigger>
+                    <TabsTrigger value="command" className="text-white data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+                        <FileText className="mr-2 h-4 w-4" /> Command Injection
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="sql">
+                    <SQLInjectionPage />
+                </TabsContent>
+                <TabsContent value="xss">
+                    <XSSPage />
+                </TabsContent>
+                <TabsContent value="upload">
+                    <FileUploadPage />
+                </TabsContent>
+                <TabsContent value="command">
+                    <CommandInjectionPage />
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
+};
+
+export default HackingPracticeApp;
